@@ -12,25 +12,25 @@
               {
                 "name": "resourceScope",
                 "type": "Microsoft.Common.ResourceScope"
-              },
+              }
+            ]
+          },
+          {
+            "name": "applicationConfiguration",
+            "type": "Microsoft.Common.Section",
+            "label": "Application Configuration",
+            "elements": [
               {
-                "name": "applicationConfiguration",
-                "type": "Microsoft.Common.Section",
-                "label": "Application Configuration",
-                "elements": [
-                  {
-                    "name": "applicationName",
-                    "type": "Microsoft.Common.TextBox",
-                    "label": "Application Name",
-                    "toolTip": "The name of your Application.",
-                    "defaultValue": "ptm-app01",
-                    "constraints": {
-                      "required": true,
-                      "regex": "^[a-z0-9-]{4,12}$",
-                      "validationMessage": "The Application Name must be between 4 and 12 characters long and contain letters, numbers and lowercase only."
-                    }
-                  }
-                ]
+                "name": "applicationName",
+                "type": "Microsoft.Common.TextBox",
+                "label": "Application Name",
+                "toolTip": "The name of your Application.",
+                "defaultValue": "ptm-app01",
+                "constraints": {
+                  "required": true,
+                  "regex": "^[a-z0-9-]{4,12}$",
+                  "validationMessage": "The Application Name must be between 4 and 12 characters long and contain letters, numbers and lowercase only."
+                }
               }
             ]
           },
