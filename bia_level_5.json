@@ -1,0 +1,465 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "applicationTag": {
+      "type": "String",
+      "defaultValue": "BIA 04"
+    },
+    "biaLevel": {
+      "type": "String",
+      "defaultValue": "4"
+    },
+    "departement": {
+      "type": "String",
+      "defaultValue": "Business"
+    },
+    "applicationName": {
+      "type": "String",
+      "defaultValue": "sampleapp-bia04"
+    },
+    "sqlLogin": {
+      "type": "string",
+      "metadata": {
+        "description": "The SQL Server administrator login"
+      }
+    },
+    "sqlPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The SQL Server administrator login password."
+      }
+    },
+    "rgName": {
+      "defaultValue": "nestedouter001",
+      "type": "String"
+    },
+    "location": {
+      "defaultValue": "eastus",
+      "type": "String"
+    },
+    "storageName": {
+      "defaultValue": "nestedouter001",
+      "type": "String"
+    }
+  },
+  "variables": {
+    "managementResourceGroupName": "rg-management-eastasia",
+
+    "managementLogWorkspaceName": "management-logaw",
+    "managementLogWorkspaceId": "[resourceId(variables('managementResourceGroupName'),'Microsoft.OperationalInsights/workspaces',variables('managementLogWorkspaceName'))]",
+
+    "networkResourceGroupName": "rg-network-eastasia-001",
+    "networkVNetName": "vnet-lz-eastasia-001",
+
+    "networkVNetId": "[resourceId(variables('networkResourceGroupName'),'Microsoft.Network/virtualNetworks',variables('networkVNetName'))]",
+    "networkSubnetName": "apps-subnet",
+
+    "networkSubnetId": "[resourceId(variables('networkResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', variables('networkVNetName'), variables('networkSubnetName'))]",
+
+    "azurePrivateDNSName": "privatelink.azurewebsites.net",
+    "azurePrivateDNSId": "[resourceId(variables('networkResourceGroupName'),'Microsoft.Network/privateDnsZones', variables('azurePrivateDNSName'))]",
+
+    "sqlMinvCore": "0",
+    "sqlMaxvCore": "2",
+    "sqlStorage": "214748364800",
+    "sqlEditionName": "GP_Gen5",
+    "sqlEditionTier": "GeneralPurpose",
+    "sqlEditionFamily": "Gen5",
+    "sqlDatabaseCollation": "SQL_Latin1_General_CP1_CI_AS"
+
+  },
+  "resources": [
+
+    //// START SHARED SERVICE
+    //Application Insight
+    {
+      "type": "microsoft.insights/components",
+      "apiVersion": "2020-02-02",
+      "name": "[concat(parameters('applicationName'),'-appinsight')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "application": "[parameters('applicationTag')]",
+        "bia_lv": "[parameters('biaLevel')]",
+        "departement": "[parameters('departement')]"
+      },
+      "kind": "web",
+      "properties": {
+        "Application_Type": "web",
+        "Flow_Type": "Redfield",
+        "Request_Source": "IbizaWebAppExtensionCreate",
+        "RetentionInDays": 90,
+        "WorkspaceResourceId": "[variables('managementLogWorkspaceId')]",
+        "IngestionMode": "LogAnalytics",
+        "publicNetworkAccessForIngestion": "Enabled",
+        "publicNetworkAccessForQuery": "Enabled"
+      }
+    },
+    //App Service Plan
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2022-03-01",
+      "name": "[concat(parameters('applicationName'),'-asp')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "application": "[parameters('applicationTag')]",
+        "bia_lv": "[parameters('biaLevel')]",
+        "departement": "[parameters('departement')]"
+      },
+      "sku": {
+        "name": "P1v2",
+        "tier": "PremiumV2",
+        "size": "P1v2",
+        "family": "Pv2",
+        //Min Capacity of Zone-Redudant
+        "capacity": 3
+      },
+      "kind": "linux",
+      "properties": {
+        "perSiteScaling": false,
+        "elasticScaleEnabled": false,
+        "maximumElasticWorkerCount": 1,
+        "isSpot": false,
+        "reserved": true,
+        "isXenon": false,
+        "hyperV": false,
+        "targetWorkerCount": 0,
+        "targetWorkerSizeId": 0,
+        //Zone-Redudant
+        "zoneRedundant": true
+      }
+    },
+    //// END SHARED SERVICE
+
+    //// START APP SERVICE FE
+    //AppService Website
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2022-03-01",
+      "name": "[concat(parameters('applicationName'),'-fe')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', concat(parameters('applicationName'),'-asp'))]",
+        "[resourceId('Microsoft.Insights/components', concat(parameters('applicationName'),'-appinsight'))]"
+      ],
+      "tags": {
+        "application": "[parameters('applicationTag')]",
+        "bia_lv": "[parameters('biaLevel')]",
+        "departement": "[parameters('departement')]"
+      },
+      "kind": "app,linux",
+      "properties": {
+        "enabled": true,
+        "hostNameSslStates": [
+          {
+            "name": "[concat(parameters('applicationName'),'-fe','.azurewebsites.net')]",
+            "sslState": "Disabled",
+            "hostType": "Standard"
+          },
+          {
+            "name": "[concat(parameters('applicationName'),'-fe','.scm.azurewebsites.net')]",
+            "sslState": "Disabled",
+            "hostType": "Repository"
+          }
+        ],
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', concat(parameters('applicationName'),'-asp'))]",
+        "reserved": true,
+        "isXenon": false,
+        "hyperV": false,
+        "vnetRouteAllEnabled": false,
+        "vnetImagePullEnabled": false,
+        "vnetContentShareEnabled": false,
+        "siteConfig": {
+          "numberOfWorkers": 1,
+          "linuxFxVersion": "DOTNETCORE|6.0",
+          "acrUseManagedIdentityCreds": false,
+          "alwaysOn": true,
+          "http20Enabled": false,
+          "functionAppScaleLimit": 0,
+          "minimumElasticInstanceCount": 0,
+          "appSettings": [
+            {
+              "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+              "value": "[reference(resourceId('microsoft.insights/components', concat(parameters('applicationName'),'-appinsight'))).InstrumentationKey]"
+            },
+            {
+              "name": "ApplicationInsightsAgent_EXTENSION_VERSION",
+              "value": "~2"
+            }
+          ]
+        },
+        "scmSiteAlsoStopped": false,
+        "clientAffinityEnabled": false,
+        "clientCertEnabled": false,
+        "clientCertMode": "Required",
+        "hostNamesDisabled": false,
+        "containerSize": 0,
+        "dailyMemoryTimeQuota": 0,
+        "httpsOnly": true,
+        "redundancyMode": "None",
+        "storageAccountRequired": false,
+        "keyVaultReferenceIdentity": "SystemAssigned"
+      }
+    },
+    //Private Endpoint
+    {
+      "type": "Microsoft.Network/privateEndpoints",
+      "apiVersion": "2019-04-01",
+      "name": "[concat(parameters('applicationName'),'-fe','-ep')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "application": "[parameters('applicationTag')]",
+        "bia_lv": "[parameters('biaLevel')]",
+        "departement": "[parameters('departement')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', concat(parameters('applicationName'),'-fe'))]"
+      ],
+      "properties": {
+        "subnet": {
+          "id": "[variables('networkSubnetId')]"
+        },
+        "privateLinkServiceConnections": [
+          {
+            "name": "[concat(parameters('applicationName'),'-fe','-ep')]",
+            "properties": {
+              "privateLinkServiceId": "[resourceId('Microsoft.Web/sites', concat(parameters('applicationName'),'-fe'))]",
+              "groupIds": [
+                "sites"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    //// END APP SERVICE
+
+    //// START APP SERVICE BE 01
+    //AppService Website
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2022-03-01",
+      "name": "[concat(parameters('applicationName'),'-be')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "application": "[parameters('applicationTag')]",
+        "bia_lv": "[parameters('biaLevel')]",
+        "departement": "[parameters('departement')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', concat(parameters('applicationName'),'-asp'))]",
+        "[resourceId('Microsoft.Insights/components', concat(parameters('applicationName'),'-appinsight'))]"
+      ],
+      "kind": "app,linux",
+      "properties": {
+        "enabled": true,
+        "hostNameSslStates": [
+          {
+            "name": "[concat(parameters('applicationName'),'-be','.azurewebsites.net')]",
+            "sslState": "Disabled",
+            "hostType": "Standard"
+          },
+          {
+            "name": "[concat(parameters('applicationName'),'-be','.scm.azurewebsites.net')]",
+            "sslState": "Disabled",
+            "hostType": "Repository"
+          }
+        ],
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', concat(parameters('applicationName'),'-asp'))]",
+        "reserved": true,
+        "isXenon": false,
+        "hyperV": false,
+        "vnetRouteAllEnabled": false,
+        "vnetImagePullEnabled": false,
+        "vnetContentShareEnabled": false,
+        "siteConfig": {
+          "numberOfWorkers": 1,
+          "linuxFxVersion": "DOTNETCORE|6.0",
+          "acrUseManagedIdentityCreds": false,
+          "alwaysOn": true,
+          "http20Enabled": false,
+          "functionAppScaleLimit": 0,
+          "minimumElasticInstanceCount": 0,
+          "appSettings": [
+            {
+              "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+              "value": "[reference(resourceId('microsoft.insights/components', concat(parameters('applicationName'),'-appinsight'))).InstrumentationKey]"
+            },
+            {
+              "name": "ApplicationInsightsAgent_EXTENSION_VERSION",
+              "value": "~2"
+            }
+          ]
+        },
+        "scmSiteAlsoStopped": false,
+        "clientAffinityEnabled": false,
+        "clientCertEnabled": false,
+        "clientCertMode": "Required",
+        "hostNamesDisabled": false,
+        "containerSize": 0,
+        "dailyMemoryTimeQuota": 0,
+        "httpsOnly": true,
+        "redundancyMode": "None",
+        "storageAccountRequired": false,
+        "keyVaultReferenceIdentity": "SystemAssigned"
+      }
+    },
+    //Private Endpoint
+    {
+      "type": "Microsoft.Network/privateEndpoints",
+      "apiVersion": "2019-04-01",
+      "name": "[concat(parameters('applicationName'),'-be','-ep')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "application": "[parameters('applicationTag')]",
+        "bia_lv": "[parameters('biaLevel')]",
+        "departement": "[parameters('departement')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', concat(parameters('applicationName'),'-be'))]"
+      ],
+      "properties": {
+        "subnet": {
+          "id": "[variables('networkSubnetId')]"
+        },
+        "privateLinkServiceConnections": [
+          {
+            "name": "[concat(parameters('applicationName'),'-be','-ep')]",
+            "properties": {
+              "privateLinkServiceId": "[resourceId('Microsoft.Web/sites', concat(parameters('applicationName'),'-be'))]",
+              "groupIds": [
+                "sites"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    //// END APP SERVICE    
+
+    //// START SQL DATABASE
+    //SQL Server
+    {
+      "type": "Microsoft.Sql/servers",
+      "apiVersion": "2020-02-02-preview",
+      "name": "[concat(parameters('applicationName'),'-dbserver')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "application": "[parameters('applicationTag')]",
+        "bia_lv": "[parameters('biaLevel')]",
+        "departement": "[parameters('departement')]"
+      },
+      "properties": {
+        "administratorLogin": "[parameters('sqlLogin')]",
+        "administratorLoginPassword": "[parameters('sqlPassword')]",
+        "version": "12.0",
+        "publicNetworkAccess": "Disabled",
+        "restrictOutboundNetworkAccess": "Disabled"
+      }
+    },
+    //SQL Elastic Pool
+    {
+      "type": "Microsoft.Sql/servers/elasticPools",
+      "apiVersion": "2020-02-02-preview",
+      "name": "[concat(parameters('applicationName'),'-dbserver', '/', parameters('applicationName'),'-elspool')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "application": "[parameters('applicationTag')]",
+        "bia_lv": "[parameters('biaLevel')]",
+        "departement": "[parameters('departement')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers/', concat(parameters('applicationName'),'-dbserver'))]"
+      ],
+      "sku": {
+        "name": "[variables('sqlEditionName')]",
+        "tier": "[variables('sqlEditionTier')]",
+        "family": "[variables('sqlEditionFamily')]",
+        "capacity": "[variables('sqlMaxvCore')]"
+      },
+      "properties": {
+        "perDatabaseSettings": {
+          "minCapacity": "[variables('sqlMinvCore')]",
+          "maxCapacity": "[variables('sqlMaxvCore')]"
+        }
+      }
+    },
+    //Private Endpoint
+    {
+      "type": "Microsoft.Network/privateEndpoints",
+      "apiVersion": "2019-04-01",
+      "name": "[concat(parameters('applicationName'),'-dbserver','-ep')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "application": "[parameters('applicationTag')]",
+        "bia_lv": "[parameters('biaLevel')]",
+        "departement": "[parameters('departement')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers/', concat(parameters('applicationName'),'-dbserver'))]"
+      ],
+      "properties": {
+        "subnet": {
+          "id": "[variables('networkSubnetId')]"
+        },
+        "privateLinkServiceConnections": [
+          {
+            "name": "[concat(parameters('applicationName'),'-dbserver','-ep')]",
+            "properties": {
+              "privateLinkServiceId": "[resourceId('Microsoft.Sql/servers/', concat(parameters('applicationName'),'-dbserver'))]",
+              "groupIds": [
+                "sqlServer"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    //// END DC
+    //// START DR
+    // Resource Group
+    {
+      "type": "Microsoft.Resources/resourceGroups",
+      "apiVersion": "2019-10-01",
+      "name": "[parameters('rgName')]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayname": "resource-group"
+      }
+    },
+    // Deployment
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "storage",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/resourceGroups', parameters('rgName'))]"
+      ],
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "outer"
+        },
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "resources": [
+            {
+              "name": "[parameters('storageName')]",
+              "type": "Microsoft.Storage/storageAccounts",
+              "apiVersion": "2019-06-01",
+              "location": "[parameters('location')]",
+              "kind": "StorageV2",
+              "sku": {
+                "name": "Premium_LRS",
+                "tier": "Premium"
+              }
+            }
+          ]
+        }
+      },
+      "resourceGroup": "[parameters('rgName')]"
+    }
+    //// END DR
+  ]
+}
