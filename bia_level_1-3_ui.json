@@ -145,8 +145,8 @@
       "outputs": {
         "parameters": {
           "applicationName": "[basics('applicationConfiguration').applicationName]",
-          "username": "[steps('databaseConfig').databaseCredential.sqlLogin]",
-          "password": "[steps('databaseConfig').databaseCredential.sqlPassword]",
+          "sqlLogin": "[steps('databaseConfig').databaseCredential.sqlLogin]",
+          "sqlPassword": "[steps('databaseConfig').databaseCredential.sqlPassword]",
           "applicationTag": "[steps('tags').applicationTag]",
           "biaLevel": "[steps('tags').biaLevel]",
           "departement": "[steps('tags').departement]"
