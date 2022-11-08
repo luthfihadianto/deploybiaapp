@@ -1,0 +1,24 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "applicationTag": {
+            "value": "BIA 01"
+        },
+        "biaLevel": {
+            "value": "1"
+        },
+        "departement": {
+            "value": "Business"
+        },
+        "applicationName": {
+            "value": "sampleapp-bia01"
+        },
+        "sqlLogin": {
+            "value": "" // TODO: Fill in parameter value
+        },
+        "sqlPassword": {
+            "value": "" // TODO: Fill in parameter value
+        }
+    }
+}
