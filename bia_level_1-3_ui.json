@@ -144,7 +144,7 @@
       },
       "outputs": {
         "parameters": {
-          "applicationName": "[basics('applicationConfiguration').applicationName]",
+          "applicationName": "[steps('applicationConfiguration').applicationName]",
           "sqlLogin": "[steps('databaseConfig').databaseCredential.sqlLogin]",
           "sqlPassword": "[steps('databaseConfig').databaseCredential.sqlPassword]",
           "applicationTag": "[steps('tags').applicationTag]",
