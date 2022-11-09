@@ -96,7 +96,7 @@
               "name": "applicationTag",
               "type": "Microsoft.Common.TextBox",
               "label": "Application Tag",
-              "defaultValue": "BIA 01",
+              "defaultValue": "BIA 04",
               "toolTip": "",
               "constraints": {
                 "required": false,

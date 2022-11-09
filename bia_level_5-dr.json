@@ -36,13 +36,13 @@
     }
   },
   "variables": {
-    "managementResourceGroupName": "rg-management-eastasia",
+    "managementResourceGroupName": "rg-management-southeastasia",
 
     "managementLogWorkspaceName": "management-logaw",
     "managementLogWorkspaceId": "[resourceId(variables('managementResourceGroupName'),'Microsoft.OperationalInsights/workspaces',variables('managementLogWorkspaceName'))]",
 
-    "networkResourceGroupName": "rg-network-eastasia-001",
-    "networkVNetName": "vnet-lz-eastasia-001",
+    "networkResourceGroupName": "rg-network-southeastasia-001",
+    "networkVNetName": "vnet-lz-southeastasia-001",
 
     "networkVNetId": "[resourceId(variables('networkResourceGroupName'),'Microsoft.Network/virtualNetworks',variables('networkVNetName'))]",
     "networkSubnetName": "apps-subnet",

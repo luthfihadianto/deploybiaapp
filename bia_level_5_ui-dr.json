@@ -96,7 +96,7 @@
               "name": "applicationTag",
               "type": "Microsoft.Common.TextBox",
               "label": "Application Tag",
-              "defaultValue": "BIA 01",
+              "defaultValue": "BIA 05",
               "toolTip": "",
               "constraints": {
                 "required": false,
@@ -110,13 +110,13 @@
               "type": "Microsoft.Common.DropDown",
               "label": "BIA Level",
               "placeholder": "",
-              "defaultValue": "4",
+              "defaultValue": "5",
               "toolTip": "",
               "constraints": {
                 "allowedValues": [
                   {
-                    "label": "4",
-                    "value": "4"
+                    "label": "5",
+                    "value": "5"
                   }
                 ],
                 "required": true
