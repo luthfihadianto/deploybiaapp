@@ -377,7 +377,7 @@
         "perDatabaseSettings": {
           "minCapacity": "[variables('sqlMinvCore')]",
           "maxCapacity": "[variables('sqlMaxvCore')]",
-        "maxSizeBytes": "[variables('sqlStorage')]"
+          "maxSizeBytes": "[variables('sqlStorage')]"
         }
       }
     },

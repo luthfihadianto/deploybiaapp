@@ -4,11 +4,11 @@
   "parameters": {
     "applicationTag": {
       "type": "String",
-      "defaultValue": "BIA 04"
+      "defaultValue": "BIA 05"
     },
     "biaLevel": {
       "type": "String",
-      "defaultValue": "4"
+      "defaultValue": "5"
     },
     "departement": {
       "type": "String",
@@ -16,7 +16,7 @@
     },
     "applicationName": {
       "type": "String",
-      "defaultValue": "ptm-app04"
+      "defaultValue": "ptm-dr-app05"
     },
     "projectName": {
       "type": "String",
@@ -59,40 +59,39 @@
     "sqlEditionTier": "GeneralPurpose",
     "sqlEditionFamily": "Gen5",
     "sqlDatabaseCollation": "SQL_Latin1_General_CP1_CI_AS"
-
   },
   "resources": [
 
     //// START SHARED SERVICE
     //Application Insight
-    {
-      "type": "microsoft.insights/components",
-      "apiVersion": "2020-02-02",
-      "name": "[concat(parameters('applicationName'),'-appinsight')]",
-      "location": "[resourceGroup().location]",
-      "tags": {
-        "application": "[parameters('applicationTag')]",
-        "bia_lv": "[parameters('biaLevel')]",
-        "departement": "[parameters('departement')]",
-        "projectName": "[parameters('projectName')]"
-      },
-      "kind": "web",
-      "properties": {
-        "Application_Type": "web",
-        "Flow_Type": "Redfield",
-        "Request_Source": "IbizaWebAppExtensionCreate",
-        "RetentionInDays": 90,
-        "WorkspaceResourceId": "[variables('managementLogWorkspaceId')]",
-        "IngestionMode": "LogAnalytics",
-        "publicNetworkAccessForIngestion": "Enabled",
-        "publicNetworkAccessForQuery": "Enabled"
-      }
-    },
+    // {
+    //   "type": "microsoft.insights/components",
+    //   "apiVersion": "2020-02-02",
+    //   "name": "[concat(parameters('applicationName'),'-appinsight')]",
+    //   "location": "[resourceGroup().location]",
+    //   "tags": {
+    //     "application": "[parameters('applicationTag')]",
+    //     "bia_lv": "[parameters('biaLevel')]",
+    //     "departement": "[parameters('departement')]",
+    //     "projectName": "[parameters('projectName')]"
+    //   },
+    //   "kind": "web",
+    //   "properties": {
+    //     "Application_Type": "web",
+    //     "Flow_Type": "Redfield",
+    //     "Request_Source": "IbizaWebAppExtensionCreate",
+    //     "RetentionInDays": 90,
+    //     "WorkspaceResourceId": "[variables('managementLogWorkspaceId')]",
+    //     "IngestionMode": "LogAnalytics",
+    //     "publicNetworkAccessForIngestion": "Enabled",
+    //     "publicNetworkAccessForQuery": "Enabled"
+    //   }
+    // },
     //App Service Plan
     {
       "type": "Microsoft.Web/serverfarms",
       "apiVersion": "2022-03-01",
-      "name": "[concat(parameters('applicationName'),'-asp')]",
+      "name": "[concat(parameters('applicationName'),'-dr','-asp')]",
       "location": "[resourceGroup().location]",
       "tags": {
         "application": "[parameters('applicationTag')]",
@@ -105,8 +104,7 @@
         "tier": "PremiumV2",
         "size": "P1v2",
         "family": "Pv2",
-        //Min Capacity of Zone-Redudant
-        "capacity": 3
+        "capacity": 1
       },
       "kind": "linux",
       "properties": {
@@ -119,8 +117,7 @@
         "hyperV": false,
         "targetWorkerCount": 0,
         "targetWorkerSizeId": 0,
-        //Zone-Redudant
-        "zoneRedundant": true 
+        "zoneRedundant": false
       }
     },
     //// END SHARED SERVICE
@@ -130,11 +127,11 @@
     {
       "type": "Microsoft.Web/sites",
       "apiVersion": "2022-03-01",
-      "name": "[concat(parameters('applicationName'),'-fe')]",
+      "name": "[concat(parameters('applicationName'),'-dr','-fe')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[resourceId('Microsoft.Web/serverfarms', concat(parameters('applicationName'),'-asp'))]",
-        "[resourceId('Microsoft.Insights/components', concat(parameters('applicationName'),'-appinsight'))]"
+        "[resourceId('Microsoft.Web/serverfarms', concat(parameters('applicationName'),'-dr','-asp'))]"
+        // "[resourceId('Microsoft.Insights/components', concat(parameters('applicationName'),'-appinsight'))]"
       ],
       "tags": {
         "application": "[parameters('applicationTag')]",
@@ -147,17 +144,17 @@
         "enabled": true,
         "hostNameSslStates": [
           {
-            "name": "[concat(parameters('applicationName'),'-fe','.azurewebsites.net')]",
+            "name": "[concat(parameters('applicationName'),'-dr','-fe','.azurewebsites.net')]",
             "sslState": "Disabled",
             "hostType": "Standard"
           },
           {
-            "name": "[concat(parameters('applicationName'),'-fe','.scm.azurewebsites.net')]",
+            "name": "[concat(parameters('applicationName'),'-dr','-fe','.scm.azurewebsites.net')]",
             "sslState": "Disabled",
             "hostType": "Repository"
           }
         ],
-        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', concat(parameters('applicationName'),'-asp'))]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', concat(parameters('applicationName'),'-dr','-asp'))]",
         "reserved": true,
         "isXenon": false,
         "hyperV": false,
@@ -171,17 +168,17 @@
           "alwaysOn": true,
           "http20Enabled": false,
           "functionAppScaleLimit": 0,
-          "minimumElasticInstanceCount": 0,
-          "appSettings": [
-            {
-              "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
-              "value": "[reference(resourceId('microsoft.insights/components', concat(parameters('applicationName'),'-appinsight'))).InstrumentationKey]"
-            },
-            {
-              "name": "ApplicationInsightsAgent_EXTENSION_VERSION",
-              "value": "~2"
-            }
-          ]
+          "minimumElasticInstanceCount": 0
+          // "appSettings": [
+          //   {
+          //     "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+          //     "value": "[reference(resourceId('microsoft.insights/components', concat(parameters('applicationName'),'-appinsight'))).InstrumentationKey]"
+          //   },
+          //   {
+          //     "name": "ApplicationInsightsAgent_EXTENSION_VERSION",
+          //     "value": "~2"
+          //   }
+          // ]
         },
         "scmSiteAlsoStopped": false,
         "clientAffinityEnabled": false,
@@ -200,7 +197,7 @@
     {
       "type": "Microsoft.Network/privateEndpoints",
       "apiVersion": "2019-04-01",
-      "name": "[concat(parameters('applicationName'),'-fe','-ep')]",
+      "name": "[concat(parameters('applicationName'),'-dr','-fe','-ep')]",
       "location": "[resourceGroup().location]",
       "tags": {
         "application": "[parameters('applicationTag')]",
@@ -209,7 +206,7 @@
         "projectName": "[parameters('projectName')]"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Web/sites', concat(parameters('applicationName'),'-fe'))]"
+        "[resourceId('Microsoft.Web/sites', concat(parameters('applicationName'),'-dr','-fe'))]"
       ],
       "properties": {
         "subnet": {
@@ -217,9 +214,9 @@
         },
         "privateLinkServiceConnections": [
           {
-            "name": "[concat(parameters('applicationName'),'-fe','-ep')]",
+            "name": "[concat(parameters('applicationName'),'-dr','-fe','-ep')]",
             "properties": {
-              "privateLinkServiceId": "[resourceId('Microsoft.Web/sites', concat(parameters('applicationName'),'-fe'))]",
+              "privateLinkServiceId": "[resourceId('Microsoft.Web/sites', concat(parameters('applicationName'),'-dr','-fe'))]",
               "groupIds": [
                 "sites"
               ]
@@ -235,7 +232,7 @@
     {
       "type": "Microsoft.Web/sites",
       "apiVersion": "2022-03-01",
-      "name": "[concat(parameters('applicationName'),'-be')]",
+      "name": "[concat(parameters('applicationName'),'-dr','-be')]",
       "location": "[resourceGroup().location]",
       "tags": {
         "application": "[parameters('applicationTag')]",
@@ -244,25 +241,25 @@
         "projectName": "[parameters('projectName')]"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Web/serverfarms', concat(parameters('applicationName'),'-asp'))]",
-        "[resourceId('Microsoft.Insights/components', concat(parameters('applicationName'),'-appinsight'))]"
+        "[resourceId('Microsoft.Web/serverfarms', concat(parameters('applicationName'),'-dr','-asp'))]"
+        // "[resourceId('Microsoft.Insights/components', concat(parameters('applicationName'),'-appinsight'))]"
       ],
       "kind": "app,linux",
       "properties": {
         "enabled": true,
         "hostNameSslStates": [
           {
-            "name": "[concat(parameters('applicationName'),'-be','.azurewebsites.net')]",
+            "name": "[concat(parameters('applicationName'),'-dr','-be','.azurewebsites.net')]",
             "sslState": "Disabled",
             "hostType": "Standard"
           },
           {
-            "name": "[concat(parameters('applicationName'),'-be','.scm.azurewebsites.net')]",
+            "name": "[concat(parameters('applicationName'),'-dr','-be','.scm.azurewebsites.net')]",
             "sslState": "Disabled",
             "hostType": "Repository"
           }
         ],
-        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', concat(parameters('applicationName'),'-asp'))]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', concat(parameters('applicationName'),'-dr','-asp'))]",
         "reserved": true,
         "isXenon": false,
         "hyperV": false,
@@ -276,17 +273,17 @@
           "alwaysOn": true,
           "http20Enabled": false,
           "functionAppScaleLimit": 0,
-          "minimumElasticInstanceCount": 0,
-          "appSettings": [
-            {
-              "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
-              "value": "[reference(resourceId('microsoft.insights/components', concat(parameters('applicationName'),'-appinsight'))).InstrumentationKey]"
-            },
-            {
-              "name": "ApplicationInsightsAgent_EXTENSION_VERSION",
-              "value": "~2"
-            }
-          ]
+          "minimumElasticInstanceCount": 0
+          // "appSettings": [
+          //   {
+          //     "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+          //     "value": "[reference(resourceId('microsoft.insights/components', concat(parameters('applicationName'),'-appinsight'))).InstrumentationKey]"
+          //   },
+          //   {
+          //     "name": "ApplicationInsightsAgent_EXTENSION_VERSION",
+          //     "value": "~2"
+          //   }
+          // ]
         },
         "scmSiteAlsoStopped": false,
         "clientAffinityEnabled": false,
@@ -305,7 +302,7 @@
     {
       "type": "Microsoft.Network/privateEndpoints",
       "apiVersion": "2019-04-01",
-      "name": "[concat(parameters('applicationName'),'-be','-ep')]",
+      "name": "[concat(parameters('applicationName'),'-dr','-be','-ep')]",
       "location": "[resourceGroup().location]",
       "tags": {
         "application": "[parameters('applicationTag')]",
@@ -314,7 +311,7 @@
         "projectName": "[parameters('projectName')]"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Web/sites', concat(parameters('applicationName'),'-be'))]"
+        "[resourceId('Microsoft.Web/sites', concat(parameters('applicationName'),'-dr','-be'))]"
       ],
       "properties": {
         "subnet": {
@@ -322,9 +319,9 @@
         },
         "privateLinkServiceConnections": [
           {
-            "name": "[concat(parameters('applicationName'),'-be','-ep')]",
+            "name": "[concat(parameters('applicationName'),'-dr','-be','-ep')]",
             "properties": {
-              "privateLinkServiceId": "[resourceId('Microsoft.Web/sites', concat(parameters('applicationName'),'-be'))]",
+              "privateLinkServiceId": "[resourceId('Microsoft.Web/sites', concat(parameters('applicationName'),'-dr','-be'))]",
               "groupIds": [
                 "sites"
               ]
@@ -340,7 +337,7 @@
     {
       "type": "Microsoft.Sql/servers",
       "apiVersion": "2020-02-02-preview",
-      "name": "[concat(parameters('applicationName'),'-dbserver')]",
+      "name": "[concat(parameters('applicationName'),'-dr','-dbserver')]",
       "location": "[resourceGroup().location]",
       "tags": {
         "application": "[parameters('applicationTag')]",
@@ -360,7 +357,7 @@
     {
       "type": "Microsoft.Sql/servers/elasticPools",
       "apiVersion": "2020-02-02-preview",
-      "name": "[concat(parameters('applicationName'),'-dbserver', '/', parameters('applicationName'),'-elspool')]",
+      "name": "[concat(parameters('applicationName'),'-dr','-dbserver', '/', parameters('applicationName'),'-dr','-elspool')]",
       "location": "[resourceGroup().location]",
       "tags": {
         "application": "[parameters('applicationTag')]",
@@ -369,7 +366,7 @@
         "projectName": "[parameters('projectName')]"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Sql/servers/', concat(parameters('applicationName'),'-dbserver'))]"
+        "[resourceId('Microsoft.Sql/servers/', concat(parameters('applicationName'),'-dr','-dbserver'))]"
       ],
       "sku": {
         "name": "[variables('sqlEditionName')]",
@@ -381,7 +378,7 @@
         "perDatabaseSettings": {
           "minCapacity": "[variables('sqlMinvCore')]",
           "maxCapacity": "[variables('sqlMaxvCore')]",
-          "maxSizeBytes": "[variables('sqlStorage')]"          
+          "maxSizeBytes": "[variables('sqlStorage')]"
         }
       }
     },
@@ -389,7 +386,7 @@
     {
       "type": "Microsoft.Network/privateEndpoints",
       "apiVersion": "2019-04-01",
-      "name": "[concat(parameters('applicationName'),'-dbserver','-ep')]",
+      "name": "[concat(parameters('applicationName'),'-dr','-dbserver','-ep')]",
       "location": "[resourceGroup().location]",
       "tags": {
         "application": "[parameters('applicationTag')]",
@@ -398,7 +395,7 @@
         "projectName": "[parameters('projectName')]"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Sql/servers/', concat(parameters('applicationName'),'-dbserver'))]"
+        "[resourceId('Microsoft.Sql/servers/', concat(parameters('applicationName'),'-dr','-dbserver'))]"
       ],
       "properties": {
         "subnet": {
@@ -406,9 +403,9 @@
         },
         "privateLinkServiceConnections": [
           {
-            "name": "[concat(parameters('applicationName'),'-dbserver','-ep')]",
+            "name": "[concat(parameters('applicationName'),'-dr','-dbserver','-ep')]",
             "properties": {
-              "privateLinkServiceId": "[resourceId('Microsoft.Sql/servers/', concat(parameters('applicationName'),'-dbserver'))]",
+              "privateLinkServiceId": "[resourceId('Microsoft.Sql/servers/', concat(parameters('applicationName'),'-dr','-dbserver'))]",
               "groupIds": [
                 "sqlServer"
               ]

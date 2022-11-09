@@ -4,11 +4,11 @@
   "parameters": {
     "applicationTag": {
       "type": "String",
-      "defaultValue": "BIA 04"
+      "defaultValue": "BIA 05"
     },
     "biaLevel": {
       "type": "String",
-      "defaultValue": "4"
+      "defaultValue": "5"
     },
     "departement": {
       "type": "String",
@@ -16,7 +16,11 @@
     },
     "applicationName": {
       "type": "String",
-      "defaultValue": "sampleapp-bia04"
+      "defaultValue": "ptm-app05"
+    },
+    "projectName": {
+      "type": "String",
+      "defaultValue": "Pertamina Landing Zone"
     },
     "sqlLogin": {
       "type": "string",
@@ -29,18 +33,6 @@
       "metadata": {
         "description": "The SQL Server administrator login password."
       }
-    },
-    "rgName": {
-      "defaultValue": "nestedouter001",
-      "type": "String"
-    },
-    "location": {
-      "defaultValue": "eastus",
-      "type": "String"
-    },
-    "storageName": {
-      "defaultValue": "nestedouter001",
-      "type": "String"
     }
   },
   "variables": {
@@ -67,7 +59,6 @@
     "sqlEditionTier": "GeneralPurpose",
     "sqlEditionFamily": "Gen5",
     "sqlDatabaseCollation": "SQL_Latin1_General_CP1_CI_AS"
-
   },
   "resources": [
 
@@ -81,7 +72,8 @@
       "tags": {
         "application": "[parameters('applicationTag')]",
         "bia_lv": "[parameters('biaLevel')]",
-        "departement": "[parameters('departement')]"
+        "departement": "[parameters('departement')]",
+        "projectName": "[parameters('projectName')]"
       },
       "kind": "web",
       "properties": {
@@ -104,7 +96,8 @@
       "tags": {
         "application": "[parameters('applicationTag')]",
         "bia_lv": "[parameters('biaLevel')]",
-        "departement": "[parameters('departement')]"
+        "departement": "[parameters('departement')]",
+        "projectName": "[parameters('projectName')]"
       },
       "sku": {
         "name": "P1v2",
@@ -126,7 +119,7 @@
         "targetWorkerCount": 0,
         "targetWorkerSizeId": 0,
         //Zone-Redudant
-        "zoneRedundant": true
+        "zoneRedundant": true 
       }
     },
     //// END SHARED SERVICE
@@ -145,7 +138,8 @@
       "tags": {
         "application": "[parameters('applicationTag')]",
         "bia_lv": "[parameters('biaLevel')]",
-        "departement": "[parameters('departement')]"
+        "departement": "[parameters('departement')]",
+        "projectName": "[parameters('projectName')]"
       },
       "kind": "app,linux",
       "properties": {
@@ -210,7 +204,8 @@
       "tags": {
         "application": "[parameters('applicationTag')]",
         "bia_lv": "[parameters('biaLevel')]",
-        "departement": "[parameters('departement')]"
+        "departement": "[parameters('departement')]",
+        "projectName": "[parameters('projectName')]"
       },
       "dependsOn": [
         "[resourceId('Microsoft.Web/sites', concat(parameters('applicationName'),'-fe'))]"
@@ -244,7 +239,8 @@
       "tags": {
         "application": "[parameters('applicationTag')]",
         "bia_lv": "[parameters('biaLevel')]",
-        "departement": "[parameters('departement')]"
+        "departement": "[parameters('departement')]",
+        "projectName": "[parameters('projectName')]"
       },
       "dependsOn": [
         "[resourceId('Microsoft.Web/serverfarms', concat(parameters('applicationName'),'-asp'))]",
@@ -313,7 +309,8 @@
       "tags": {
         "application": "[parameters('applicationTag')]",
         "bia_lv": "[parameters('biaLevel')]",
-        "departement": "[parameters('departement')]"
+        "departement": "[parameters('departement')]",
+        "projectName": "[parameters('projectName')]"
       },
       "dependsOn": [
         "[resourceId('Microsoft.Web/sites', concat(parameters('applicationName'),'-be'))]"
@@ -347,7 +344,8 @@
       "tags": {
         "application": "[parameters('applicationTag')]",
         "bia_lv": "[parameters('biaLevel')]",
-        "departement": "[parameters('departement')]"
+        "departement": "[parameters('departement')]",
+        "projectName": "[parameters('projectName')]"
       },
       "properties": {
         "administratorLogin": "[parameters('sqlLogin')]",
@@ -366,7 +364,8 @@
       "tags": {
         "application": "[parameters('applicationTag')]",
         "bia_lv": "[parameters('biaLevel')]",
-        "departement": "[parameters('departement')]"
+        "departement": "[parameters('departement')]",
+        "projectName": "[parameters('projectName')]"
       },
       "dependsOn": [
         "[resourceId('Microsoft.Sql/servers/', concat(parameters('applicationName'),'-dbserver'))]"
@@ -380,7 +379,8 @@
       "properties": {
         "perDatabaseSettings": {
           "minCapacity": "[variables('sqlMinvCore')]",
-          "maxCapacity": "[variables('sqlMaxvCore')]"
+          "maxCapacity": "[variables('sqlMaxvCore')]",
+          "maxSizeBytes": "[variables('sqlStorage')]"
         }
       }
     },
@@ -393,7 +393,8 @@
       "tags": {
         "application": "[parameters('applicationTag')]",
         "bia_lv": "[parameters('biaLevel')]",
-        "departement": "[parameters('departement')]"
+        "departement": "[parameters('departement')]",
+        "projectName": "[parameters('projectName')]"
       },
       "dependsOn": [
         "[resourceId('Microsoft.Sql/servers/', concat(parameters('applicationName'),'-dbserver'))]"
@@ -414,52 +415,6 @@
           }
         ]
       }
-    },
-    //// END DC
-    //// START DR
-    // Resource Group
-    {
-      "type": "Microsoft.Resources/resourceGroups",
-      "apiVersion": "2019-10-01",
-      "name": "[parameters('rgName')]",
-      "location": "[parameters('location')]",
-      "tags": {
-        "displayname": "resource-group"
-      }
-    },
-    // Deployment
-    {
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2019-10-01",
-      "name": "storage",
-      "dependsOn": [
-        "[resourceId('Microsoft.Resources/resourceGroups', parameters('rgName'))]"
-      ],
-      "properties": {
-        "expressionEvaluationOptions": {
-          "scope": "outer"
-        },
-        "mode": "Incremental",
-        "template": {
-          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-          "contentVersion": "1.0.0.0",
-          "resources": [
-            {
-              "name": "[parameters('storageName')]",
-              "type": "Microsoft.Storage/storageAccounts",
-              "apiVersion": "2019-06-01",
-              "location": "[parameters('location')]",
-              "kind": "StorageV2",
-              "sku": {
-                "name": "Premium_LRS",
-                "tier": "Premium"
-              }
-            }
-          ]
-        }
-      },
-      "resourceGroup": "[parameters('rgName')]"
     }
-    //// END DR
   ]
 }
