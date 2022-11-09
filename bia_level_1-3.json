@@ -10,6 +10,10 @@
       "type": "String",
       "defaultValue": "1"
     },
+    "projectName": {
+      "type": "String",
+      "defaultValue": "Pertamina Landing Zone"
+    },
     "departement": {
       "type": "String",
       "defaultValue": "Business"
@@ -40,13 +44,13 @@
     "networkResourceGroupName": "rg-network-eastasia-001",
     "networkVNetName": "vnet-lz-eastasia-001",
 
-    "networkVNetId": "[resourceId(variables('networkResourceGroupName'),'Microsoft.Network/virtualNetworks',variables('networkVNetName'))]",
+    //"networkVNetId": "[resourceId(variables('networkResourceGroupName'),'Microsoft.Network/virtualNetworks',variables('networkVNetName'))]",
     "networkSubnetName": "apps-subnet",
 
     "networkSubnetId": "[resourceId(variables('networkResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', variables('networkVNetName'), variables('networkSubnetName'))]",
 
-    "azurePrivateDNSName": "privatelink.azurewebsites.net",
-    "azurePrivateDNSId": "[resourceId(variables('networkResourceGroupName'),'Microsoft.Network/privateDnsZones', variables('azurePrivateDNSName'))]",
+    //"azurePrivateDNSName": "privatelink.azurewebsites.net",
+    //"azurePrivateDNSId": "[resourceId(variables('networkResourceGroupName'),'Microsoft.Network/privateDnsZones', variables('azurePrivateDNSName'))]",
 
     "sqlMinvCore": "0",
     "sqlMaxvCore": "2",
@@ -54,7 +58,7 @@
     "sqlEditionName": "GP_Gen5",
     "sqlEditionTier": "GeneralPurpose",
     "sqlEditionFamily": "Gen5",
-    "sqlDatabaseCollation": "SQL_Latin1_General_CP1_CI_AS"
+    //"sqlDatabaseCollation": "SQL_Latin1_General_CP1_CI_AS"
 
   },
   "resources": [
@@ -67,9 +71,10 @@
       "name": "[concat(parameters('applicationName'),'-appinsight')]",
       "location": "[resourceGroup().location]",
       "tags": {
-        "application": "[parameters('applicationTag')]",
+"application": "[parameters('applicationTag')]",
         "bia_lv": "[parameters('biaLevel')]",
-        "departement": "[parameters('departement')]"
+        "departement": "[parameters('departement')]",
+	"projectName": "[parameters('projectName')]"
       },
       "kind": "web",
       "properties": {
@@ -90,9 +95,10 @@
       "name": "[concat(parameters('applicationName'),'-asp')]",
       "location": "[resourceGroup().location]",
       "tags": {
-        "application": "[parameters('applicationTag')]",
+"application": "[parameters('applicationTag')]",
         "bia_lv": "[parameters('biaLevel')]",
-        "departement": "[parameters('departement')]"
+        "departement": "[parameters('departement')]",
+	"projectName": "[parameters('projectName')]"
       },
       "sku": {
         "name": "P1v2",
@@ -129,9 +135,10 @@
         "[resourceId('Microsoft.Insights/components', concat(parameters('applicationName'),'-appinsight'))]"
       ],
       "tags": {
-        "application": "[parameters('applicationTag')]",
+"application": "[parameters('applicationTag')]",
         "bia_lv": "[parameters('biaLevel')]",
-        "departement": "[parameters('departement')]"
+        "departement": "[parameters('departement')]",
+	"projectName": "[parameters('projectName')]"
       },
       "kind": "app,linux",
       "properties": {
@@ -194,9 +201,10 @@
       "name": "[concat(parameters('applicationName'),'-fe','-ep')]",
       "location": "[resourceGroup().location]",
       "tags": {
-        "application": "[parameters('applicationTag')]",
+"application": "[parameters('applicationTag')]",
         "bia_lv": "[parameters('biaLevel')]",
-        "departement": "[parameters('departement')]"
+        "departement": "[parameters('departement')]",
+	"projectName": "[parameters('projectName')]"
       },
       "dependsOn": [
         "[resourceId('Microsoft.Web/sites', concat(parameters('applicationName'),'-fe'))]"
@@ -227,9 +235,10 @@
       "name": "[concat(parameters('applicationName'),'-be')]",
       "location": "[resourceGroup().location]",
       "tags": {
-        "application": "[parameters('applicationTag')]",
+"application": "[parameters('applicationTag')]",
         "bia_lv": "[parameters('biaLevel')]",
-        "departement": "[parameters('departement')]"
+        "departement": "[parameters('departement')]",
+	"projectName": "[parameters('projectName')]"
       },
       "dependsOn": [
         "[resourceId('Microsoft.Web/serverfarms', concat(parameters('applicationName'),'-asp'))]",
@@ -296,9 +305,10 @@
       "name": "[concat(parameters('applicationName'),'-be','-ep')]",
       "location": "[resourceGroup().location]",
       "tags": {
-        "application": "[parameters('applicationTag')]",
+"application": "[parameters('applicationTag')]",
         "bia_lv": "[parameters('biaLevel')]",
-        "departement": "[parameters('departement')]"
+        "departement": "[parameters('departement')]",
+	"projectName": "[parameters('projectName')]"
       },
       "dependsOn": [
         "[resourceId('Microsoft.Web/sites', concat(parameters('applicationName'),'-be'))]"
@@ -329,9 +339,10 @@
       "name": "[concat(parameters('applicationName'),'-dbserver')]",
       "location": "[resourceGroup().location]",
       "tags": {
-        "application": "[parameters('applicationTag')]",
+"application": "[parameters('applicationTag')]",
         "bia_lv": "[parameters('biaLevel')]",
-        "departement": "[parameters('departement')]"
+        "departement": "[parameters('departement')]",
+	"projectName": "[parameters('projectName')]"
       },
       "properties": {
         "administratorLogin": "[parameters('sqlLogin')]",
@@ -350,7 +361,8 @@
       "tags": {
         "application": "[parameters('applicationTag')]",
         "bia_lv": "[parameters('biaLevel')]",
-        "departement": "[parameters('departement')]"
+        "departement": "[parameters('departement')]",
+        "projectName": "[parameters('projectName')]"
       },
       "dependsOn": [
         "[resourceId('Microsoft.Sql/servers/', concat(parameters('applicationName'),'-dbserver'))]"
@@ -359,6 +371,7 @@
         "name": "[variables('sqlEditionName')]",
         "tier": "[variables('sqlEditionTier')]",
         "family": "[variables('sqlEditionFamily')]",
+        "maxSizeBytes": "[variables('sqlStorage')]",
         "capacity": "[variables('sqlMaxvCore')]"
       },
       "properties": {
@@ -375,9 +388,10 @@
       "name": "[concat(parameters('applicationName'),'-dbserver','-ep')]",
       "location": "[resourceGroup().location]",
       "tags": {
-        "application": "[parameters('applicationTag')]",
+"application": "[parameters('applicationTag')]",
         "bia_lv": "[parameters('biaLevel')]",
-        "departement": "[parameters('departement')]"
+        "departement": "[parameters('departement')]",
+	"projectName": "[parameters('projectName')]"
       },
       "dependsOn": [
         "[resourceId('Microsoft.Sql/servers/', concat(parameters('applicationName'),'-dbserver'))]"

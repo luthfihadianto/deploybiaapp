@@ -3,7 +3,7 @@
   "view": {
     "kind": "Form",
     "properties": {
-      "title": "Deployment App BIA Level 1-3",
+      "title": "Pertamina Application Deployment Template [BIA Level 1-3]",
       "steps": [
         {
           "name": "basics",
@@ -12,8 +12,14 @@
             {
               "name": "resourceScope",
               "type": "Microsoft.Common.ResourceScope"
+            },
+            {
+              "name": "projectName",
+              "type": "Microsoft.Common.TextBox",
+              "label": "Project Name",
+              "toolTip": "The name of your Project."
             }
-          ]
+        ]
         },
         {
           "name": "applicationConfiguration",
@@ -144,6 +150,7 @@
     },
     "outputs": {
       "parameters": {
+        "projectName": "[steps('basics').projectName]",
         "applicationName": "[steps('applicationConfiguration').applicationName]",
         "sqlLogin": "[steps('databaseConfig').databaseCredential.sqlLogin]",
         "sqlPassword": "[string(steps('databaseConfig').databaseCredential.sqlPassword)]",
