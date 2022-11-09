@@ -34,7 +34,7 @@
               "defaultValue": "ptm-app01",
               "constraints": {
                 "required": true,
-                "regex": "^[a-z0-9-]{4,12}$",
+                "regex": "^[a-z0-9-]{4,20}$",
                 "validationMessage": "The Application Name must be between 4 and 12 characters long and contain letters, numbers and lowercase only."
               }
             }

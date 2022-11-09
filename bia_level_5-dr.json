@@ -36,13 +36,13 @@
     }
   },
   "variables": {
-    "managementResourceGroupName": "rg-management-southeastasia",
+    "managementResourceGroupName": "rg-management-eastasia",
 
     "managementLogWorkspaceName": "management-logaw",
     "managementLogWorkspaceId": "[resourceId(variables('managementResourceGroupName'),'Microsoft.OperationalInsights/workspaces',variables('managementLogWorkspaceName'))]",
 
-    "networkResourceGroupName": "rg-network-southeastasia-001",
-    "networkVNetName": "vnet-lz-southeastasia-001",
+    "networkResourceGroupName": "rg-network-eastasia-001",
+    "networkVNetName": "vnet-lz-eastasia-001",
 
     "networkVNetId": "[resourceId(variables('networkResourceGroupName'),'Microsoft.Network/virtualNetworks',variables('networkVNetName'))]",
     "networkSubnetName": "apps-subnet",
@@ -52,7 +52,7 @@
     "azurePrivateDNSName": "privatelink.azurewebsites.net",
     "azurePrivateDNSId": "[resourceId(variables('networkResourceGroupName'),'Microsoft.Network/privateDnsZones', variables('azurePrivateDNSName'))]",
 
-    "sqlMinvCore": "0",
+    "sqlMinvCore": "2",
     "sqlMaxvCore": "2",
     "sqlStorage": "214748364800",
     "sqlEditionName": "GP_Gen5",
