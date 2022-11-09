@@ -57,7 +57,7 @@
     "sqlStorage": "214748364800",
     "sqlEditionName": "GP_Gen5",
     "sqlEditionTier": "GeneralPurpose",
-    "sqlEditionFamily": "Gen5",
+    "sqlEditionFamily": "Gen5"
     //"sqlDatabaseCollation": "SQL_Latin1_General_CP1_CI_AS"
 
   },
