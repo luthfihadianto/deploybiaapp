@@ -371,13 +371,13 @@
         "name": "[variables('sqlEditionName')]",
         "tier": "[variables('sqlEditionTier')]",
         "family": "[variables('sqlEditionFamily')]",
-        "maxSizeBytes": "[variables('sqlStorage')]",
         "capacity": "[variables('sqlMaxvCore')]"
       },
       "properties": {
         "perDatabaseSettings": {
           "minCapacity": "[variables('sqlMinvCore')]",
-          "maxCapacity": "[variables('sqlMaxvCore')]"
+          "maxCapacity": "[variables('sqlMaxvCore')]",
+        "maxSizeBytes": "[variables('sqlStorage')]"
         }
       }
     },
