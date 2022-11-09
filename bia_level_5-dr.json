@@ -42,7 +42,7 @@
     "managementLogWorkspaceId": "[resourceId(variables('managementResourceGroupName'),'Microsoft.OperationalInsights/workspaces',variables('managementLogWorkspaceName'))]",
 
     "networkResourceGroupName": "rg-network-eastasia-001",
-    "networkVNetName": "vnet-lz-eastasia-001",
+    "networkVNetName": "vnet-lz-australiaeast-001",
 
     "networkVNetId": "[resourceId(variables('networkResourceGroupName'),'Microsoft.Network/virtualNetworks',variables('networkVNetName'))]",
     "networkSubnetName": "apps-subnet",
